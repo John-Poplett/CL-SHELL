@@ -4,7 +4,8 @@
   :serial t
   :depends-on (#:bordeaux-threads
                #:cl-fad
-	       #:chanl)
+	       #:chanl
+               #:lisp-unit)
   :components ((:file "package")
                (:file "cl-shell")))
 
