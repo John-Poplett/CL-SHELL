@@ -157,25 +157,29 @@
 
 (defun p-helper%% (producer args consumer filters)
     `(let ((,consumer ,(pp-helper args))
-	   (,filters '(,@(butlast args)))
+	   ;(,filters '(,@(butlast args)))
 	   (channel1 (make-instance 'channel))
 	   ,@(loop for i from 2 to (length args)
-		collect `(,(symb 'cl-shell::channel (write-to-string i)) (make-instance 'channel))))
+		collect `(,(channel-symbol i) (make-instance 'channel))))
        (pexec (:name "producer") (funcall ,producer channel1))
-       ;,@(mapcar (filter-gen) (butlast args))
+       ,@(mapcar (filter-gen) (butlast args))
        ;(pexec (:name "filter") (funcall ,(car filters) channel1 channel2))
-       (funcall ,consumer channel2)))
+       (funcall ,consumer ,(channel-symbol (length args)))))
 
 (defun foo%% ()
   (p-helper%% 'a 'b 'c 'd))
 
 (defmacro p%% (producer &rest args) 
-  (alexandria:with-gensyms (consumer filters)
+  (let ((consumer (gensym))
+	(filters (gensym)))
     `(,@(p-helper%% producer args consumer filters))))
 
 (defun z%% ()
  (let* ((path "/Users/john/Development/android/sdk/samples/android-9/JetBoy"))
-   (p-helper%% `(find-files ,path) '((null-filter) (message-count)) (gensym) (gensym))))
-   ;(pprint (macroexpand-1 (p%% (find-files path) (null-filter) (message-count))))))
+   (p-helper%% `(find-files ,path) '((null-filter) (null-filter) (message-count)) (gensym) (gensym))
+   (pprint (macroexpand-1 (p%% (find-files path) (null-filter) (message-count))))))
 
-;(z%%)
+(defun z%%% ()
+ (let* ((path "/Users/john/Development/android/sdk/samples/android-9/JetBoy"))
+   (p%% (find-files path) (null-filter) (null-filter) (message-count))))
+
