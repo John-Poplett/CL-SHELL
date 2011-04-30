@@ -48,26 +48,6 @@
 (defun make-channel () 
   (make-instance 'channel))
 
-(defun do-filters (filters producer)
-  (let ((current-channel (gensym)))
-    (cond ((null filters)
-	   `(let ((,current-channel (make-channel)))
-	      (pexec (:name "producer") (funcall ,producer ,current-channel))
-	      ,current-channel))
-	  (t 
-	   `(let ((,current-channel (make-instance 'channel)))
-	      (pexec (:name "filter") (funcall ,(car filters) ,(do-filters (cdr filters) producer) ,current-channel))
-	      ,current-channel)))))
-
-(defun pipe-test (producer &optional (consumer (standard-output-sink)) &rest filters)
-  `(,consumer ,(do-filters (reverse filters) producer)))
-
-(defmacro pipe (producer consumer &rest filters)
-    `(,consumer ,(do-filters (reverse filters) producer)))
-
-(defmacro poop (producer filters consumer) 
-  `(format t "~A <-> ~{A <-> ~}~A~%" #',producer ,filters #',consumer))
-
 (defun count-files (directory &key (test (constantly t)))
   (two-stage-pipe (find-files directory :test test) (message-count)))
 
@@ -166,9 +146,6 @@
        ;(pexec (:name "filter") (funcall ,(car filters) channel1 channel2))
        (funcall ,consumer ,(channel-symbol (length args)))))
 
-(defun foo%% ()
-  (p-helper%% 'a 'b 'c 'd))
-
 (defmacro p%% (producer &rest args) 
   (let ((consumer (gensym))
 	(filters (gensym)))
@@ -183,3 +160,13 @@
  (let* ((path "/Users/john/Development/android/sdk/samples/android-9/JetBoy"))
    (p%% (find-files path) (null-filter) (null-filter) (message-count))))
 
+(defmacro -> (producer &rest args) 
+  (let ((consumer (gensym))
+	(filters (gensym)))
+    `(,@(p-helper%% producer args consumer filters))))
+
+
+(defun count-files% (directory &key (test (constantly t)))
+  (-> (find-files directory :test test) (message-count)))
+
+(z%%%)
