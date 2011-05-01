@@ -14,6 +14,11 @@
   (lambda (output-channel) (cl-fad:walk-directory directory #'(lambda (file) (send output-channel file)) :test test)
 	  (send output-channel nil)))
 
+(defun send-list (list &key (test (constantly t)))
+  "Create a producer lambda expression for sending the elements of a list."
+  (lambda (output-channel) (dolist (ele list) (if (funcall test ele) (send output-channel ele)))
+	  (send output-channel nil)))
+
 (defun message-count ()
   "Create a consumer lambda expression that counts the number of messages it recieves."
   (lambda (input-channel) 
@@ -58,40 +63,38 @@
     (funcall consumer channel2)))
 |#
 
-(defun pp-helper (args)
-  (cond ((null args)
-	 '(standard-output-sink))
-	(t `(,@(car (last args))))))
-
 (defun mkstr (&rest args)
   (with-output-to-string (s)
     (dolist (a args) (princ a s))))
 
 (defun symb (&rest args)
-  (values (intern (apply #'mkstr args))))
+  (values (intern (apply #'mkstr args) :cl-shell)))
 
 (defmacro channel-symbol (n)
-  `(symb 'cl-shell::channel (write-to-string ,n)))
+  `(symb 'channel (write-to-string ,n)))
 
-(defun filter-gen ()
-  (let ((counter 1))
-    (lambda (filter) 
-      (let ((old-counter counter))
-	(setf counter (+ 1 counter))
-	`(pexec (:name "filter") (funcall ,filter ,(channel-symbol old-counter) ,(channel-symbol counter)))))))
-
-(defun p-helper%% (producer args consumer)
-    `(let ((,consumer ,(pp-helper args))
-	   (channel1 (make-instance 'channel))
-	   ,@(loop for i from 2 to (length args)
-		collect `(,(channel-symbol i) (make-instance 'channel))))
-       (pexec (:name "producer") (funcall ,producer channel1))
-       ,@(mapcar (filter-gen) (butlast args))
-       (funcall ,consumer ,(channel-symbol (length args)))))
-
-(defmacro -> (producer &rest args) 
+(defmacro -> (producer &rest args)
+  "Create a pipeline from threads and channels to process."
   (let ((consumer (gensym)))
-    `(,@(p-helper%% producer args consumer))))
+    (labels ((consumer-helper (args)
+	       (cond ((null args)
+		      '(standard-output-sink))
+		     (t `(,@(car (last args))))))
+	     (filter-gen ()
+	       (let ((counter 1))
+		 (lambda (filter) 
+		   (let ((old-counter counter))
+		     (setf counter (+ 1 counter))
+		     `(pexec (:name "filter") (funcall ,filter ,(channel-symbol old-counter) ,(channel-symbol counter)))))))
+	     (pipe-builder (producer args consumer)
+	       `(let ((,consumer ,(consumer-helper args))
+		      (cl-shell::channel1 (make-instance 'channel))
+		      ,@(loop for i from 2 to (length args)
+			   collect `(,(channel-symbol i) (make-instance 'channel))))
+		  (pexec (:name "producer") (funcall ,producer cl-shell::channel1))
+		  ,@(mapcar (filter-gen) (butlast args))
+		  (funcall ,consumer ,(channel-symbol (max 1 (length args)))))))
+      `(,@(pipe-builder producer args consumer)))))
 
 (defun count-files (directory &key (test (constantly t)))
   (-> (find-files directory :test test) (message-count)))
@@ -101,5 +104,14 @@
 
 (defun count-java-files (directory)
   (count-files-with-suffix directory ".java"))
+
+(defun hello-world () 
+  "The pipeline version of the hello world program."
+  (-> (send-list '("hello world!"))))
+
+(defun simple-test ()
+  (let ((last-value nil))
+    (-> (send-list '("hello world!" "goodbye, world")) (sink #'(lambda (value) (setf last-value value))))
+    last-value))
 
 
