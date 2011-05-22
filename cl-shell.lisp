@@ -1,4 +1,4 @@
-;;;; cl-shell.lisp
+;;; cl-shell.lisp
 
 (in-package #:cl-shell)
 
@@ -33,6 +33,25 @@
 	  (send output-channel value)))
     (send output-channel nil)))
 
+(defun file-pumper ()
+  (lambda (input-channel output-channel)
+    (do ((filename (recv input-channel) (recv input-channel)))
+	((null filename) t)
+      (with-open-file (stream filename :external-format :iso-8859-1) ; FIXME - external-format hack for Mac OS X
+	(do ((line (read-line stream nil)
+	       (read-line stream nil)))
+	    ((null line))
+	  (send output-channel line))))
+    (send output-channel nil)))
+
+(defun observer (handler)
+  (lambda (input-channel output-channel)
+    (do ((value (recv input-channel) (recv input-channel)))
+	((null value) t)
+      (funcall handler value)
+      (send output-channel value))
+    (send output-channel nil)))
+
 (defun null-filter () 
   (filter (constantly t)))
 
@@ -63,15 +82,18 @@
     (funcall consumer channel2)))
 |#
 
-(defun mkstr (&rest args)
-  (with-output-to-string (s)
-    (dolist (a args) (princ a s))))
-
-(defun symb (&rest args)
-  (values (intern (apply #'mkstr args) :cl-shell)))
-
 (defmacro channel-symbol (n)
   `(symb 'channel (write-to-string ,n)))
+
+#|
+(defmacro channel-symbol (n)
+  (labels ((mkstr (&rest args)
+	     (with-output-to-string (s)
+	       (dolist (a args) (princ a s))))
+	   (symb (&rest args)
+	     (values (intern (apply #'mkstr args) :cl-shell))))
+    `(symb 'channel (write-to-string ,n))))
+|#
 
 (defmacro -> (producer &rest args)
   "Create a pipeline from threads and channels to process."
@@ -99,19 +121,7 @@
 (defun count-files (directory &key (test (constantly t)))
   (-> (find-files directory :test test) (message-count)))
 
-(defun count-files-with-suffix (directory suffix)
-  (count-files directory :test #'(lambda (file) (ends-with (namestring file) suffix))))
-
-(defun count-java-files (directory)
-  (count-files-with-suffix directory ".java"))
-
 (defun hello-world () 
   "The pipeline version of the hello world program."
   (-> (send-list '("hello world!"))))
-
-(defun simple-test ()
-  (let ((last-value nil))
-    (-> (send-list '("hello world!" "goodbye, world")) (sink #'(lambda (value) (setf last-value value))))
-    last-value))
-
 

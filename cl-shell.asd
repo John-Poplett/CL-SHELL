@@ -10,6 +10,7 @@
   :components ((:static-file "README.txt")
                (:static-file "tests.lisp")
                (:file "package")
+	       (:file "macro-helper")
                (:file "cl-shell")))
 
 (defmethod operation-done-p ((o test-op) (c (eql (find-system :cl-shell))))
