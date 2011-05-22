@@ -26,6 +26,7 @@
        while (not (null (recv input-channel))) count t)))
 
 (defun filter (test)
+  "Filter out elements from the stream based on the results of the test function."
   (lambda (input-channel output-channel)
     (do ((value (recv input-channel) (recv input-channel)))
 	((null value) t)
@@ -45,6 +46,7 @@
     (send output-channel nil)))
 
 (defun observer (handler)
+  "A filter that observes elements that flow across the stream."
   (lambda (input-channel output-channel)
     (do ((value (recv input-channel) (recv input-channel)))
 	((null value) t)
@@ -95,9 +97,10 @@
     `(symb 'channel (write-to-string ,n))))
 |#
 
-(defmacro -> (producer &rest args)
+(defmacro -> (producer &rest newargs)
   "Create a pipeline from threads and channels to process."
-  (let ((consumer (gensym)))
+  (let ((consumer (gensym))
+	(args (remove #'null-filter newargs))) ; optimization 
     (labels ((consumer-helper (args)
 	       (cond ((null args)
 		      '(standard-output-sink))

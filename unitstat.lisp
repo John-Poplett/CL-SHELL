@@ -39,32 +39,28 @@
   (not (null (scan "public.*(interface|abstract.*class)" line))))
 
 (defun analyze (name directory filter)
+  "Analyze source-code in a given directory and report the findings."
   (let ((allFiles 0)
 	(allTestFiles 0)
 	(linesOfCode 0)
 	(linesOfTestCode 0)
 	(numberofClasses 0)
-	(numberofAbstractClasses 0))
+	(numberofAbstractClasses 0)
+	(test-file-p nil))
     (unless (directory-exists-p directory) (error "Directory does not exist!"))
     (-> 
      (find-files directory :test (java-file-p)) 
      filter
-     (sink #'(lambda (file) (if (ends-with (namestring file) "Test.java") (incf allTestFiles)) (incf allFiles))))
-    (-> 
-     (find-files directory :test (java-file-p)) 
-     filter
+     (observer #'(lambda (file) (if (ends-with (namestring file) "Test.java") (progn (incf allTestFiles) (setf test-file-p t)) (setf test-file-p nil)) (incf allFiles)))
      (file-pumper)
      (sink #'(lambda (line)
 	       (if (standard-class-p line)
 		   (incf numberofClasses))
 	       (if (abstract-class-p line)
 		   (incf numberofAbstractClasses))
+	       (if (not (null test-file-p))
+		   (incf linesOfTestCode))
 	       (incf linesOfCode))))
-    (-> 
-     (find-files directory :test (java-test-file-p)) 
-     filter
-     (file-pumper)
-     (sink #'(lambda (line) (declare (ignore line)) (incf linesOfTestCode))))
     (values name allTestFiles allFiles (round linesOfCode 1000) (round linesOfTestCode 1000) numberOfClasses numberOfAbstractClasses)))
 
 (defun z ()
