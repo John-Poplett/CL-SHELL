@@ -121,10 +121,3 @@
 		  (funcall ,consumer ,(channel-symbol (max 1 (length args)))))))
       `(,@(pipe-builder producer args consumer)))))
 
-(defun count-files (directory &key (test (constantly t)))
-  (-> (find-files directory :test test) (message-count)))
-
-(defun hello-world () 
-  "The pipeline version of the hello world program."
-  (-> (send-list '("hello world!"))))
-

@@ -11,7 +11,8 @@
                (:static-file "tests.lisp")
                (:file "package")
 	       (:file "macro-helper")
-               (:file "cl-shell")))
+               (:file "cl-shell")
+	       (:file "utils")))
 
 (defmethod operation-done-p ((o test-op) (c (eql (find-system :cl-shell))))
   nil)

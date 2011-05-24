@@ -5,24 +5,6 @@
 
 (in-package :unitstat)
 
-	; company=`all $cwd | $filter | linecount`
-
-(defun cd (path)
-  (setf *default-pathname-defaults* path)
-  #+(and clisp linux) (linux:|chdir| (namestring (truename path))))
-
-(defun count-files-with-suffix (directory suffix)
-  (count-files directory :test #'(lambda (file) (ends-with (namestring file) suffix))))
-
-(defun count-non-test-java-files (directory)
-  (count-files directory :test #'(lambda (file) (and (ends-with (namestring file) ".java") (not (ends-with (namestring file) "Test.java"))))))
-
-(defun count-java-test-files (directory)
-  (count-files directory :test #'(lambda (file) (ends-with (namestring file) "Test.java"))))
-
-(defun count-java-files (directory)
-  (count-files-with-suffix directory ".java"))
-
 (defun java-file-p ()
   (lambda (file) (ends-with (namestring file) ".java")))
 
@@ -61,7 +43,22 @@
 	       (if (not (null test-file-p))
 		   (incf linesOfTestCode))
 	       (incf linesOfCode))))
-    (values name allTestFiles allFiles (round linesOfCode 1000) (round linesOfTestCode 1000) numberOfClasses numberOfAbstractClasses)))
+    (let* ((fileRatio (/ allTestFiles allFiles))
+	   (kloc (round linesOfCode 1000))
+	   (testKloc (round linesOfTestCode 1000))
+	   (klocRatio (/ testKloc kloc))
+	   (abstraction (/ numberOfAbstractClasses numberofClasses)))
+    (list name directory allFiles allTestFiles fileRatio kloc testKloc klocRatio abstraction))))
+
+; printf "%-10s %30s %15s %15s %10s %15s %15s %10s %10s\n" "Company" "Directory" "Java Files" "Test Files" "Ratio" "KLOC" "Test KLOC" "Ratio" "Abstraction"
+
+(defun println (name directory files testFiles fileRatio kloc testKloc klocRatio abstraction)
+  (format t "~10A ~30A ~15A ~15A ~10A ~15A ~15A ~10A ~10A~%" name directory files testFiles fileRatio kloc testKloc klocRatio abstraction))
+
+(defun header (name)
+  (format t "Analysis for ~A~%" name)
+  (println "Company" "Directory" "Java Files" "Test Files" "Ratio" "KLOC" "Test KLOC" "Ratio" "Abstraction"))
+
 
 (defun z ()
   (analyze "Google" "/Users/john/Development/android/sdk/" (null-filter)))

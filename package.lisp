@@ -10,6 +10,7 @@
     #:file-pumper
     #:send-list 
     #:find-files
+    #:message-count
     #:null-filter
     #:observer
     #:sink
