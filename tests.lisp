@@ -16,4 +16,10 @@
 (define-test message-count-test ()
 	     (assert-equal (-> (send-list (list 1 2 3 4 5)) (message-count)) 5))
 
+(define-test filter-test ()
+	     (let ((alist (list "we" "the" "people")))
+	       (assert-equal (-> (send-list alist) (filter #'(lambda (string) (not (search "the" string)))) (message-count)) 2)
+	       (assert-equal (-> (send-list alist) (filter #'(lambda (string) (search "peach" string))) (message-count)) 0)
+	       (assert-equal (-> (send-list alist) (null-filter) (message-count)) (length alist))
+	       (assert-equal (-> (send-list alist) (filter #'(lambda (string) (search "the" string))) (message-count)) 1)))
 
