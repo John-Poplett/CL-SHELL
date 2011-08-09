@@ -23,3 +23,8 @@
 	       (assert-equal (-> (send-list alist) (null-filter) (message-count)) (length alist))
 	       (assert-equal (-> (send-list alist) (filter #'(lambda (string) (search "the" string))) (message-count)) 1)))
 
+  (define-test observer-test ()
+	       (let ((counter-1 0)
+		     (counter-2 0))
+		 (assert-true (-> (send-list (list 1 2 3)) (observer #'(lambda (value) (incf counter-1))) (sink #'(lambda (value) (incf counter-2)))) (= 6 (+ counter-1 counter-2)))))
+

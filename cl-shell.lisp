@@ -4,15 +4,30 @@
 
 ;;; "cl-shell" goes here. Hacks and glory await!
 
-(defun ends-with (a b) 
+(defun ends-with (string &rest args)
   "Utility predicate function used in filters."
-  (let ((diff (- (length a) (length b)))) 
-    (string= a b :start1 diff)))
+  (dolist (suffix args)
+    (let ((diff (- (length string) (length suffix))))
+      (if (and (> diff 0) (string= string suffix :start1 diff))
+	  (return t)))))
 
 (defun find-files (directory &key (test (constantly t)))
   "Create a producer lambda expression for finding files that meet certain criteria."
   (lambda (output-channel) (cl-fad:walk-directory directory #'(lambda (file) (send output-channel file)) :test test)
 	  (send output-channel nil)))
+
+(defun process (process args)
+  "Create a producer lambda expression for sending the output of a process."
+  (lambda (output-channel)
+    (let ((process (sb-ext:run-program process args :output :stream :wait nil)))
+      (unwind-protect
+	   (with-open-stream (input (sb-ext:process-output process))
+	     (do ((line (read-line input nil)
+		    (read-line input nil)))
+		 ((null line))
+	       (send output-channel line)))
+	(send output-channel nil)
+	(sb-ext:process-close process)))))
 
 (defun send-list (list &key (test (constantly t)))
   "Create a producer lambda expression for sending the elements of a list."
@@ -32,6 +47,14 @@
 	((null value) t)
       (if (funcall test value)
 	  (send output-channel value)))
+    (send output-channel nil)))
+
+(defun transformer (transform-function)
+  "Apply transform-function to each element in the stream."
+  (lambda (input-channel output-channel)
+    (do ((value (recv input-channel) (recv input-channel)))
+	((null value) t)
+      (send output-channel (funcall transform-function value)))
     (send output-channel nil)))
 
 (defun file-pumper ()

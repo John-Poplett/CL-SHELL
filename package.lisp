@@ -13,6 +13,8 @@
     #:message-count
     #:null-filter
     #:observer
+    #:process
     #:sink
-    #:standard-output-sink))
+    #:standard-output-sink
+    #:transformer))
 
