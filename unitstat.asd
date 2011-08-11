@@ -1,4 +1,4 @@
-;;;; cl-shell.asd
+;;;; unitstat.asd
 
 (asdf:defsystem #:unitstat
   :version "1.0"
@@ -7,3 +7,6 @@
   :depends-on (#:cl-fad #:cl-ppcre #:cl-shell)
   :components ((:file "unitstat")))
 
+(defmethod perform ((o test-op) (c (eql (find-system :unitstat))))
+  (operate 'load-op :unitstat-tests)
+  (operate 'test-op :unitstat-tests))
