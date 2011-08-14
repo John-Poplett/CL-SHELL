@@ -9,7 +9,10 @@
 (in-package :unitstat)
 
 (defun c-file-pathname-p (file)
-  (ends-with (namestring file) ".c" ".h" ".cpp" ".hpp"))
+  (ends-with (namestring file) ".c" ".h"))
+
+(defun c-plus-plus-file-pathname-p (file)
+  (ends-with (namestring file) ".cpp" ".hpp"))
 
 (defun java-file-pathname-p (file)
   (ends-with (namestring file) ".java"))
@@ -95,7 +98,7 @@
 (defun println (name directory files testFiles fileRatio kloc testKloc klocRatio abstraction)
   (format t "~15A ~30A ~15A ~15A ~10A ~15A ~15A ~10A ~10A~%" (ltrim name 15) (ltrim directory 30) files testFiles fileRatio kloc testKloc klocRatio abstraction))
 
-(defun header (name)
+(defun default-header (name)
   (format t "Analysis for ~A~%" name)
   (println "Name" "Directory" "Source Files" "Test Files" "Ratio" "KLOC" "Test KLOC" "Ratio" "Abstraction"))
 
@@ -105,10 +108,8 @@
 	(subseq path-string (+ 1 index))
 	path-string)))
 
-(defun repo-handler (line)
-  (progn
-    (let ((analysis (analyze (basename line) (merge-pathnames line))))
-      (apply #'println analysis))))
+(defun default-analysis-handler (analysis)
+  (apply #'println analysis))
 
 (defmacro with-chdir (dir &body body)
   "Logically and physically change file system directories."
@@ -121,12 +122,28 @@
 		,@body))
 	 (sb-posix:chdir ,cwd)))))
 
-(defun analyze-repo (&optional (dir (if (directory-exists-p "/home/john/endive/") "/home/john/endive/" "/Users/john/Development/android/master/")))
-  (header dir)
+(defun analyze-repo (&key (dir (if (directory-exists-p "/home/john/endive/") "/home/john/endive/" "/Users/john/Development/android/master/"))
+		     (repo-program-path (if (file-exists-p "/home/john/bin/repo") "/home/john/bin/repo" "/Users/john/bin/repo"))
+		     (filters "bionic|blur|frameworks|kernel|motorola|packages")
+		     (analysis-handler #'default-analysis-handler)
+		     (header #'default-header))
+  "Iterate over contents of a repo and invoke a handler with the name and path of each repo."
+  (funcall header dir)
   (with-chdir dir
     (-> 
-     (process (if (file-exists-p "/home/john/bin/repo") "/home/john/bin/repo" "/Users/john/bin/repo") '("list"))
+     (process repo-program-path '("list"))
      (transformer #'(lambda (line) (subseq line 0 (search " " line))))
-     (filter #'(lambda (line) (cl-ppcre:scan "bionic|blur|frameworks|kernel|motorola|packages" line)))
-     (sink #'repo-handler)
-     )))
+     (filter #'(lambda (line) (cl-ppcre:scan filters line)))
+     (sink #'(lambda (line) (funcall analysis-handler (analyze (basename line) (merge-pathnames line))))))))
+
+#|
+(defun faux-analyze-repo (&key header analysis-handler)
+  (declare (ignore header))
+  (funcall analysis-handler '("bionic" "/home/john/endive/bionic" 1793 1 1/1793 184 0 0 0))
+  (funcall analysis-handler '("src" "/device/motorola/modem/ste/src" 1089 104 104/1089 229 23 23/229 0)))
+|#
+
+(defun analyze-repo-sexp ()
+  (let ((results nil))
+    (analyze-repo :header #'(lambda (dir) (declare (ignore dir))) :analysis-handler #'(lambda (analysis) (push analysis results)))
+    results))
