@@ -4,7 +4,7 @@
   :version "1.0"
   :licence "MIT"
   :serial t
-  :depends-on (#:cl-fad #:cl-ppcre #:cl-shell)
+  :depends-on (#:cl-fad #:cl-ppcre #:cl-shell #:local-time)
   :components ((:file "unitstat")))
 
 (defmethod perform ((o test-op) (c (eql (find-system :unitstat))))
