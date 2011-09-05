@@ -3,6 +3,20 @@
 (defpackage :unitstat
   (:use :cl :cl-fad :cl-ppcre :cl-shell :local-time)
   (:export
+   #:all-files
+   #:test-files
+   #:lines-of-code
+   #:lines-of-test-code
+   #:kloc
+   #:test-kloc
+   #:kloc-ratio
+   #:number-of-classes
+   #:number-of-abstract-classes
+   #:number-of-asserts
+   #:file-ratio
+   #:abstraction
+   #:assert-ratio
+   #:to-list
    #:analyze
    #:source-file-pathname-p
    #:test-file-pathname-p))
