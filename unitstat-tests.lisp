@@ -21,4 +21,17 @@
 	    (let ((analysis (unitstat:analyze "Self" directory)))
 	      (assert-true (< 0 (unitstat:lines-of-code analysis)))
 	      (assert-true (< 0 (unitstat:lines-of-test-code analysis)))
+	      (assert-true (< 0 (unitstat:number-of-classes analysis)))
+))))))
+
+(define-test multi-directories
+  (let ((path-locations '("Development/lisp/projects/cl-shell" "lisp/projects/cl-shell")))
+    (dolist (path-location path-locations)
+      (let ((directory (merge-pathnames path-location)))
+	(if (directory-exists-p directory)
+	    (let ((analysis (unitstat:analyze "Self" directory))
+		  (double-analysis (unitstat:analyze "Self2" (list directory directory))))
+	      (assert-true (= (* 2 (unitstat:lines-of-code analysis)) (unitstat:lines-of-code double-analysis)))
+	      (assert-true (= (* 2 (unitstat:lines-of-test-code analysis)) (unitstat:lines-of-test-code double-analysis)))
+	      (assert-true (= (* 2 (unitstat:number-of-classes analysis)) (unitstat:number-of-classes double-analysis)))
 ))))))
