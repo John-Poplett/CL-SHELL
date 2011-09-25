@@ -6,7 +6,6 @@
     #:-> 
     #:count-files 
     #:filter 
-    #:ends-with 
     #:file-pumper
     #:send-list 
     #:find-files

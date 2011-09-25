@@ -4,13 +4,6 @@
 
 ;;; "cl-shell" goes here. Hacks and glory await!
 
-(defun ends-with (string &rest args)
-  "Utility predicate function used in filters."
-  (dolist (suffix args)
-    (let ((diff (- (length string) (length suffix))))
-      (if (and (> diff 0) (string= string suffix :start1 diff))
-	  (return t)))))
-
 (defun find-files (directory &key (test (constantly t)))
   "Create a producer lambda expression for finding files that meet certain criteria."
   (lambda (output-channel) (cl-fad:walk-directory directory #'(lambda (file) (send output-channel file)) :test test)
