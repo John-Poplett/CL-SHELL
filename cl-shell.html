@@ -1,0 +1,220 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+               "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+lang="en" xml:lang="en">
+<head>
+<title>CL-SHELL</title>
+<meta http-equiv="Content-Type" content="text/html;charset=iso-8859-1"/>
+<meta name="generator" content="Org-mode"/>
+<meta name="generated" content="2011-09-24 23:32:33 CDT"/>
+<meta name="author" content="John Poplett"/>
+<meta name="description" content=""/>
+<meta name="keywords" content=""/>
+<style type="text/css">
+ <!--/*--><![CDATA[/*><!--*/
+  html { font-family: Times, serif; font-size: 12pt; }
+  .title  { text-align: center; }
+  .todo   { color: red; }
+  .done   { color: green; }
+  .tag    { background-color: #add8e6; font-weight:normal }
+  .target { }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .right  {margin-left:auto; margin-right:0px;  text-align:right;}
+  .left   {margin-left:0px;  margin-right:auto; text-align:left;}
+  .center {margin-left:auto; margin-right:auto; text-align:center;}
+  p.verse { margin-left: 3% }
+  pre {
+	border: 1pt solid #AEBDCC;
+	background-color: #F3F5F7;
+	padding: 5pt;
+	font-family: courier, monospace;
+        font-size: 90%;
+        overflow:auto;
+  }
+  table { border-collapse: collapse; }
+  td, th { vertical-align: top;  }
+  th.right  { text-align:center;  }
+  th.left   { text-align:center;   }
+  th.center { text-align:center; }
+  td.right  { text-align:right;  }
+  td.left   { text-align:left;   }
+  td.center { text-align:center; }
+  dt { font-weight: bold; }
+  div.figure { padding: 0.5em; }
+  div.figure p { text-align: center; }
+  div.inlinetask {
+    padding:10px;
+    border:2px solid gray;
+    margin:10px;
+    background: #ffffcc;
+  }
+  textarea { overflow-x: auto; }
+  .linenr { font-size:smaller }
+  .code-highlighted {background-color:#ffff00;}
+  .org-info-js_info-navigation { border-style:none; }
+  #org-info-js_console-label { font-size:10px; font-weight:bold;
+                               white-space:nowrap; }
+  .org-info-js_search-highlight {background-color:#ffff00; color:#000000;
+                                 font-weight:bold; }
+  /*]]>*/-->
+</style>
+<script type="text/javascript">
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+
+</head>
+<body>
+
+<div id="preamble">
+
+</div>
+
+<div id="content">
+<h1 class="title">CL-SHELL</h1>
+
+
+<div id="table-of-contents">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#sec-1">1 Introduction </a></li>
+<li><a href="#sec-2">2 Theory of Operation </a></li>
+<li><a href="#sec-3">3 Hello world </a></li>
+<li><a href="#sec-4">4 Acknowledgements </a></li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-1" class="outline-2">
+<h2 id="sec-1"><span class="section-number-2">1</span> Introduction </h2>
+<div class="outline-text-2" id="text-1">
+
+<p>cl-shell is a Common Lisp package that provides a processing model
+inspired by the Unix shell pipeline facility. It replaces the shell
+programming concept of filters with lambda expressions and
+channels. Like the shell pipeline facility, cl-shell is a facility for
+programming with multiple, concurrent threads.
+</p>
+<p>
+The intention is to emulate the ease and simplicity of shell
+programming whtin the context of a Lisp application and, at the same
+time, to provide a model for concurrent programming in the era of
+multi-core processors.
+</p>
+</div>
+
+</div>
+
+<div id="outline-container-2" class="outline-2">
+<h2 id="sec-2"><span class="section-number-2">2</span> Theory of Operation </h2>
+<div class="outline-text-2" id="text-2">
+
+<p>Whereas the shell pipeline utility relies on filters and standard I/O,
+cl-shell correspondingly uses lambda expressions and channels.
+</p>
+<p>
+Each stage in the pipeline is a thread. At the heart of cl-shell is
+the -&gt; macro, which is used to create a pipeline from a set of one or
+arguments.
+</p>
+<p>
+The valid forms for the <code>-&gt;</code> macro are a one-argument form, a two-argument
+form and a form with three or more arguments:
+</p>
+
+
+
+<pre class="example">(-&gt; producer) 
+(-&gt; producer consumer)
+(-&gt; producer filter+ consumer)
+</pre>
+
+
+<p>
+The first argument specifies a producer; the middle arguments specify
+filters. The final argument specifies a consumer.
+</p>
+<p>
+All three functions return lambda functions.
+</p>
+<p>
+A producer takes data from an arbitrary source, e.g. the lines in a text
+file, and sends them to an output channel.
+</p>
+<p>
+A filter takes data from an input channel, transforms the stream in some
+way, and sends the transformed output to an output channel.
+</p>
+<p>
+A consumer reads data from an input channel and absorbs it in some way.
+</p>
+<p>
+cl-shell provides functions to help create producers, filters and
+consumers.
+</p>
+</div>
+
+</div>
+
+<div id="outline-container-3" class="outline-2">
+<h2 id="sec-3"><span class="section-number-2">3</span> Hello world </h2>
+<div class="outline-text-2" id="text-3">
+
+
+
+
+<pre class="example">;;; hello-world.lisp
+
+(in-package #:cl-shell)
+
+(defun hello-world () 
+  "The pipeline version of the hello world program."
+  (-&gt; (send-list '("hello world!"))))
+</pre>
+
+
+</div>
+
+</div>
+
+<div id="outline-container-4" class="outline-2">
+<h2 id="sec-4"><span class="section-number-2">4</span> Acknowledgements </h2>
+<div class="outline-text-2" id="text-4">
+
+
+<p>
+cl-shell is based on the CSP-like chanl facility.
+</p></div>
+</div>
+</div>
+
+<div id="postamble">
+<p class="date">Date: 2011-09-24 23:32:33 CDT</p>
+<p class="author">Author: John Poplett</p>
+<p class="creator">Org version 7.7 with Emacs version 23</p>
+<a href="http://validator.w3.org/check?uri=referer">Validate XHTML 1.0</a>
+
+</div>
+</body>
+</html>
