@@ -1,0 +1,39 @@
+cl-shell provides a processing model inspired by the Unix shell
+pipeline facility. It replaces the shell programming concept of filters
+with lambda expressions  and channels. Like the shell pipeline facility,
+cl-shell is  a facility for programming with multiple, concurrent threads.
+
+The intention is to emulate  the ease and simplicity of shell
+programming whtin the context of a Lisp application and, at the same time,
+to provide a model for concurrent programming in the era of multi-core
+processors.
+
+Whereas the shell pipeline utility relies on filters and standard I/O, cl-shell
+correspondingly uses lambda expressions and channels.
+
+Each stage in the pipeline is a thread. At the heart of cl-shell
+is the -> macro, which is used to create a pipeline from a set
+of one or arguments.
+
+The valid forms for the -> macro are a one-argument form, a two-argument
+form and a form with three or more arguments:
+
+(-> producer) 
+(-> producer consumer)
+(-> producer filter+ consumer)
+
+The first argument specifies a producer; the middle arguments specify
+filters. The final argument specifies a consumer.
+
+All three functions return lambda functions.
+
+A producer takes data from an arbitrary source, e.g. the lines in a text
+file, and sends them to an output channel.
+
+A filter takes data from an input channel, transforms the stream in some
+way, and sends the transformed output to an output channel.
+
+A consumer reads data from an input channel and absorbs it in some way.
+
+cl-shell provides functions to help create producers, filters and
+consumers.
